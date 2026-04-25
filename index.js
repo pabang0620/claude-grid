@@ -2,6 +2,11 @@
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+// 스크립트 자신의 폴더에서 실행 시 한 단계 위 디렉토리를 기본으로 사용
+const START_DIR = process.cwd() === __dirname ? path.dirname(__dirname) : process.cwd()
 import { input, select } from '@inquirer/prompts'
 import search from '@inquirer/search'
 import {
@@ -126,7 +131,7 @@ async function runInteractive() {
   // 각 창 경로 입력 (search 기반 자동완성)
   const paths = []
   for (let i = 0; i < count; i++) {
-    const dir = await promptPath(`창 ${i + 1} 경로 (엔터 = 현재 경로):`, process.cwd())
+    const dir = await promptPath(`창 ${i + 1} 경로 (엔터 = 현재 경로):`, START_DIR)
     paths.push(dir?.trim() ?? '')
   }
 
@@ -183,7 +188,6 @@ async function promptPath(message, defaultPath) {
     source: async (input) => {
       currentInput = input ?? ''
 
-      // 입력이 없으면 실행 위치 기준 폴더 목록 표시
       if (!currentInput) {
         return [
           { name: `(현재 경로) ${defaultPath}`, value: '' },
