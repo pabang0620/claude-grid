@@ -126,7 +126,7 @@ async function runInteractive() {
   // 각 창 경로 입력 (search 기반 자동완성)
   const paths = []
   for (let i = 0; i < count; i++) {
-    const dir = await promptPath(`창 ${i + 1} 경로 (엔터 = 현재 경로):`, os.homedir())
+    const dir = await promptPath(`창 ${i + 1} 경로 (엔터 = 현재 경로):`, process.cwd())
     paths.push(dir?.trim() ?? '')
   }
 
@@ -183,10 +183,10 @@ async function promptPath(message, defaultPath) {
     source: async (input) => {
       currentInput = input ?? ''
 
-      // 입력이 없으면 홈 디렉토리 폴더 목록 표시
+      // 입력이 없으면 실행 위치 기준 폴더 목록 표시
       if (!currentInput) {
         return [
-          { name: `(현재 경로) ${process.cwd()}`, value: '' },
+          { name: `(현재 경로) ${defaultPath}`, value: '' },
           ...listDirs(defaultPath).slice(0, 14),
         ]
       }
