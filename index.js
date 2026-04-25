@@ -91,17 +91,22 @@ async function runInteractive() {
   console.log('\nWelcome to claunch\n')
 
   const platform = detectOS()
-  const terminal = detectTerminal(platform)
+  let terminal = detectTerminal(platform)
   const monitors = await detectMonitors(platform)
 
-  const terminalLabel = terminalDisplayName(terminal)
-  console.log(
-    `감지됨: ${terminalLabel}, ${
-      monitors.length === 1
-        ? '단일 모니터'
-        : monitorLabel(monitors[0], 0, monitors.length)
-    }`
-  )
+  // 감지된 터미널을 기본값으로 제시하고 변경 가능하게 선택
+  const allChoices = terminalChoices(platform)
+  const otherChoices = allChoices
+    .filter((t) => t !== terminal)
+    .map((t) => ({ name: terminalDisplayName(t), value: t }))
+
+  terminal = await select({
+    message: `터미널 감지됨: ${terminalDisplayName(terminal)} — 맞나요?`,
+    choices: [
+      { name: `${terminalDisplayName(terminal)} (감지됨)`, value: terminal },
+      ...otherChoices,
+    ],
+  })
 
   // 모니터 선택 (2개 이상일 때)
   let selectedMonitor = monitors[0]
@@ -290,6 +295,16 @@ function terminalDisplayName(terminal) {
     xterm: 'xterm',
   }
   return map[terminal] ?? terminal
+}
+
+function terminalChoices(platform) {
+  if (platform === 'windows' || platform === 'wsl') {
+    return ['windowsterminal', 'powershell', 'cmd']
+  }
+  if (platform === 'mac') {
+    return ['iterm2', 'terminal']
+  }
+  return ['gnome-terminal', 'konsole', 'xterm']
 }
 
 function printAliasHint(os) {
