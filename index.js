@@ -205,8 +205,9 @@ async function promptPath(message, defaultPath) {
         : dirs
 
       return [
+        { name: `↵  ${currentInput} (이 경로 사용)`, value: currentInput },
         { name: `(현재 경로) ${defaultPath}`, value: '' },
-        ...filtered.slice(0, 15),
+        ...filtered.slice(0, 13),
       ]
     },
   })
