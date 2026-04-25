@@ -6,7 +6,7 @@
   "type": "module",
   "keywords": ["claude", "claude-code", "terminal", "workspace", "layout", "developer-tools", "ai"],
   "license": "MIT",
-  "repository": { "type": "git", "url": "https://github.com/pabang0620/claude-grid.git" },
+  "repository": { "type": "git", "url": "git+https://github.com/pabang0620/claude-grid.git" },
   "homepage": "https://github.com/pabang0620/claude-grid#readme",
   "engines": { "node": ">=18" },
   "files": ["index.js", "lib/"],
