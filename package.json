@@ -1,8 +1,8 @@
 {
-  "name": "claunch",
+  "name": "claude-grid",
   "version": "0.1.0",
   "description": "Instantly arrange Claude terminal windows on any monitor",
-  "bin": { "claunch": "./index.js" },
+  "bin": { "claude-grid": "./index.js" },
   "type": "module",
   "keywords": ["claude", "claude-code", "terminal", "workspace", "layout", "developer-tools", "ai"],
   "license": "MIT",
