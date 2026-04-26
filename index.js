@@ -108,17 +108,29 @@ async function runInteractive() {
     ],
   })
 
-  // 모니터 선택 (2개 이상일 때)
+  // 모니터 선택 — 항상 물어봄
   let selectedMonitor = monitors[0]
-  if (monitors.length >= 2) {
-    const monitorIdx = await select({
-      message: '사용할 모니터를 선택하세요:',
-      choices: monitors.map((m, idx) => ({
-        name: monitorLabel(m, idx, monitors.length),
-        value: idx,
-      })),
-    })
-    selectedMonitor = monitors[monitorIdx]
+  const monitorChoices = monitors.length >= 2
+    ? monitors.map((m, idx) => ({ name: monitorLabel(m, idx, monitors.length), value: idx }))
+    : [
+        { name: '현재 모니터 (감지됨)', value: 0 },
+        { name: '오른쪽 모니터', value: 'right' },
+        { name: '왼쪽 모니터', value: 'left' },
+      ]
+
+  const monitorChoice = await select({
+    message: '어느 모니터에 배치할까요?',
+    choices: monitorChoices,
+  })
+
+  if (monitorChoice === 'right' || monitorChoice === 'left') {
+    // 수동 지정: 감지된 모니터 기준으로 오프셋 계산
+    const base = monitors[0]
+    selectedMonitor = monitorChoice === 'right'
+      ? { ...base, id: 1, x: base.x + base.width }
+      : { ...base, id: -1, x: base.x - base.width }
+  } else {
+    selectedMonitor = monitors[monitorChoice]
   }
 
   // 창 개수
