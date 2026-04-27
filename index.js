@@ -22,6 +22,13 @@ import { detectOS, detectTerminal, detectMonitors, monitorLabel } from './lib/de
 import { calculateLayout } from './lib/layout.js'
 import { spawnWindows } from './lib/spawn.js'
 
+function cliName() {
+  // invoked as npx claude-grid, or installed globally, or node index.js
+  const argv1 = process.argv[1] ?? ''
+  if (argv1.includes('claude-grid')) return 'claude-grid'
+  return 'node index.js'
+}
+
 const args = process.argv.slice(2)
 
 async function main() {
@@ -283,11 +290,16 @@ async function runWithSettings({ terminal, os: platform, monitor, count, paths }
     cell: layout[i],
   }))
 
-  console.log(`\n배치 중... (${windows.length}개 창)`)
+  console.log(`\n창 ${windows.length}개 배치 중...`)
 
   await spawnWindows(terminal, platform, windows)
 
-  console.log('완료')
+  const cli = cliName()
+  console.log(`\n${'─'.repeat(42)}`)
+  console.log(`  설정 변경   ${cli} --config`)
+  console.log(`  프리셋 목록  ${cli} --list`)
+  console.log(`  프리셋 실행  ${cli} <이름>`)
+  console.log(`${'─'.repeat(42)}\n`)
 }
 
 function pickMonitorById(monitors, id) {
