@@ -3,7 +3,7 @@
 **Open several Claude Code sessions at once, tiled across your monitors, with one command.**
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/pabang0620/claude-grid/main/promo/demo.gif" alt="claude-grid opening 8 Claude Code sessions tiled on screen, then 12, then spread across two monitors" width="800">
+  <img src="https://raw.githubusercontent.com/pabang0620/claude-grid/main/promo/demo.gif" alt="claude-grid opening 8 Claude Code sessions tiled on screen, then 12, then across two monitors, then as tabs in one window" width="800">
 </p>
 
 ```bash
@@ -17,7 +17,7 @@ The first run asks a few questions (terminal, tiled windows or tabs, monitor, ho
 - Tabs mode (Windows Terminal): one window with a tab per session, switch like browser tabs
 - `npx claude-grid 8` opens 8 windows this time without changing your saved setup
 
-Video version (MP4, 14s): [promo/claude-grid-promo.mp4](promo/claude-grid-promo.mp4)
+Video version (MP4, 17s): [promo/claude-grid-promo.mp4](promo/claude-grid-promo.mp4)
 
 > The npm package named `claunch` is an unrelated project. Use `claude-grid`.
 
