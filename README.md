@@ -6,180 +6,101 @@
 npx claude-grid
 ```
 
-Pick a monitor, how many windows, and a folder for each. claude-grid opens that many terminal windows, snaps them into a grid, and starts `claude` in each one. Save the setup as a preset and bring the whole workspace back with `npx claude-grid <preset>`.
+The first run asks four questions (terminal, monitor, how many windows, which folder) and saves the answers. Every run after that opens the windows right away. claude-grid launches each terminal, finds the new window, and moves it into its grid cell, so 4, 8 or 20 windows line up edge to edge.
 
-- Windows Terminal / PowerShell / CMD, WSL, macOS (Terminal.app, iTerm2), Linux (GNOME Terminal, Konsole, xterm)
-- Layouts for 2 to 6 windows, multi-monitor aware
-- Presets stored in `~/.claunch.json` (file name kept for backward compatibility)
+- Windows Terminal on Windows and WSL, macOS Terminal.app / iTerm2, Linux GNOME Terminal / Konsole / xterm
+- 1 to 20 windows, on one monitor or spread across all of them
+- `npx claude-grid 8` opens 8 windows this time without changing your saved setup
 
 > The npm package named `claunch` is an unrelated project. Use `claude-grid`.
 
-(한국어 설명은 아래에 있습니다.)
-
 ---
 
-## 한국어
+## 설명서 (한국어)
 
-터미널 창을 자동으로 지정 모니터에 배치하고, 각 창에서 `claude` 명령어를 실행해주는 CLI 도구.
+Claude Code 창 여러 개를 한 번에 띄워 모니터에 빈틈없이 나눠 배치합니다.
 
----
-
-## Install
-
-별도 설치 없이 바로 실행:
+### 처음 실행
 
 ```bash
 npx claude-grid
 ```
 
-또는 전역 설치:
+처음 한 번만 아래를 묻고 저장합니다. 설치된 터미널이 하나뿐이거나 모니터가 한 대면 그 질문은 건너뜁니다.
+
+1. 터미널 (Windows Terminal 추천)
+2. 모니터 (한 대 고르기, 또는 "모든 모니터에 나눠서")
+3. 창 개수 (1~20)
+4. 폴더
+   - 실행한 위치: 명령을 친 폴더에서 엽니다
+   - 항상 같은 폴더: 지금 고른 폴더에서 항상 엽니다
+   - 창마다 다른 폴더: 창별로 고릅니다
+
+### 다음부터
 
 ```bash
-npm install -g claude-grid
-claude-grid
+npx claude-grid        # 저장한 설정 그대로 바로 실행
+npx claude-grid 10     # 이번만 10개 (설정은 그대로)
 ```
 
----
+### 설정 바꾸기
 
-## Quick Start
+| 명령 | 하는 일 |
+|------|---------|
+| `claude-grid --config` | 네 가지를 다시 묻고 저장한 뒤 실행 |
+| `claude-grid --show` | 지금 설정 보기 |
+| `claude-grid --config 이름` | 설정을 "이름" 프리셋으로 따로 저장 |
+| `claude-grid 이름` | 프리셋으로 실행 |
+| `claude-grid --list` | 프리셋 목록 |
+| `claude-grid --help` | 도움말 |
 
-1. `npx claude-grid` 실행
-2. 모니터 선택 (멀티 모니터 환경), 창 개수 입력, 각 창 경로 입력
-3. 설정 저장 여부 선택 → 자동으로 창 배치 및 claude 실행
-
----
-
-## Commands
-
-| 커맨드 | 설명 |
-|--------|------|
-| `npx claude-grid` | 저장된 설정으로 바로 실행 (최초엔 인터랙티브 설정) |
-| `npx claude-grid --config` | 설정 다시 하기 |
-| `npx claude-grid --list` | 저장된 프리셋 목록 보기 |
-| `npx claude-grid <프리셋이름>` | 특정 프리셋 바로 실행 |
-
----
-
-## Presets
-
-자주 쓰는 창 구성을 프리셋으로 저장할 수 있습니다.
-
-```bash
-# 저장된 프리셋 목록
-npx claude-grid --list
-
-# 특정 프리셋 실행
-npx claude-grid fullstack
-```
-
----
-
-## Config
-
-설정 파일 위치: `~/.claunch.json`
+설정 파일은 `~/.claude-grid.json`입니다. 직접 고쳐도 됩니다.
 
 ```json
 {
   "terminal": "windowsterminal",
-  "monitor": 0,
-  "paths": ["/myapp/frontend", "/myapp/backend", "", ""],
+  "monitor": "all",
+  "count": 8,
+  "folder": "/home/me/project",
+  "paths": [],
   "presets": {
-    "fullstack": {
-      "count": 4,
-      "paths": ["/myapp/frontend", "/myapp/backend", "", ""]
-    },
-    "research": {
-      "count": 2,
-      "paths": ["/notes", ""]
-    }
+    "fullstack": { "count": 2, "paths": ["/home/me/app/front", "/home/me/app/back"] }
   }
 }
 ```
 
-`paths` 항목에서 빈 문자열(`""`)은 실행 시 현재 경로(`process.cwd()`)를 사용합니다.
+- `monitor`: `"all"`은 모든 모니터에 나눠서, `null`은 주 모니터
+- `folder`: `""`이면 실행한 위치
+- `paths`: 창마다 폴더를 다르게 쓸 때만 채웁니다. 비어 있는 칸은 `folder`를 씁니다
 
----
+예전 버전 설정(`~/.claunch.json`)이 있으면 그대로 읽어 씁니다.
 
-## Alias 설정
+### 배치 방식
 
-`cl` 한 글자로 실행하려면 alias를 추가하세요.
+모니터 크기에 맞춰 칸이 너무 좁거나 납작해지지 않게 줄·칸 수를 고르고, 마지막 줄이 덜 차면 그 줄 창을 가로로 늘립니다. Windows Terminal 창은 폭 466px보다 좁아지지 않으므로, 그보다 좁아질 배치는 피합니다.
 
-### zsh (`~/.zshrc`)
+1920x1080 모니터 한 대 기준: 4개는 2x2, 6개는 3x2, 8개는 4x2, 10개는 4x3(마지막 줄 2개), 20개는 4x5
 
-```zsh
-alias cl="npx claude-grid"
-```
+"모든 모니터에 나눠서"는 모니터 넓이 비율대로 나눕니다. 예: 같은 크기 두 대에 10개면 5개씩
 
-적용:
-
-```bash
-source ~/.zshrc
-```
-
-### bash (`~/.bashrc`)
+### 짧게 치기
 
 ```bash
-alias cl="npx claude-grid"
+alias cl="npx claude-grid"          # ~/.bashrc 또는 ~/.zshrc
 ```
-
-적용:
-
-```bash
-source ~/.bashrc
-```
-
-### fish (`~/.config/fish/config.fish`)
-
-```fish
-alias cl "npx claude-grid"
-```
-
-### PowerShell (`$PROFILE`)
 
 ```powershell
-function cl { npx claude-grid @args }
+function cl { npx claude-grid @args }   # PowerShell $PROFILE
 ```
 
-또는 alias:
+### 필요한 것
 
-```powershell
-Set-Alias cl "npx claude-grid"
-```
+- Node.js 18 이상
+- `claude` 명령 (Claude Code CLI)
+- WSL에서는 Windows Terminal(`wt.exe`) 권장
 
-`$PROFILE` 파일 경로 확인: `echo $PROFILE`
+### 안 될 때
 
----
-
-## Supported Terminals
-
-| 터미널 | OS | 지원 여부 |
-|--------|-----|---------|
-| Windows Terminal | Windows | 지원 |
-| PowerShell | Windows | 지원 |
-| CMD | Windows | 지원 |
-| Terminal.app | macOS | 지원 |
-| iTerm2 | macOS | 지원 |
-| GNOME Terminal | Linux | 지원 |
-| Konsole | Linux | 지원 |
-| xterm | Linux | 지원 (폴백) |
-
----
-
-## Window Layout
-
-창 개수에 따른 자동 레이아웃:
-
-| 개수 | 레이아웃 |
-|------|---------|
-| 2 | 좌/우 (가로 모니터) 또는 위/아래 |
-| 3 | 2x2 그리드 (3칸 사용) |
-| 4 | 2x2 그리드 |
-| 5 | 좌 2개 + 우 3개 |
-| 6 | 3x2 또는 2x3 그리드 |
-
----
-
-## Requirements
-
-- Node.js 18+
-- `claude` CLI가 PATH에 설치되어 있어야 합니다.
+- 창이 열리는데 claude가 안 뜸: 그 창에서 `claude`를 직접 쳐 보세요. 안 되면 Claude Code 설치나 PATH 문제입니다
+- 창 자리가 어긋남: `claude-grid --config`로 모니터를 다시 고르세요. 모니터 연결을 바꾸면 저장한 모니터를 못 찾아 주 모니터에 띄웁니다
+- 맥: 처음 실행 때 "터미널 제어 허용" 창이 뜨면 허용해야 창을 옮길 수 있습니다
