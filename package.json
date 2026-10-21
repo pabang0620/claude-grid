@@ -1,6 +1,6 @@
 {
   "name": "claude-grid",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Open many Claude Code sessions at once, tiled across your monitors. Asks once, then launches with one command.",
   "bin": {
     "claude-grid": "index.js"

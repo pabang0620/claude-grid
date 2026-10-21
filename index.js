@@ -6,7 +6,7 @@ import { loadConfig, saveConfig, getPreset, listPresets, hasSettings, CONFIG_PAT
 import { detectOS, availableTerminals, detectMonitors, findClaude, terminalDisplayName } from './lib/detect.js'
 import { calculateLayout, calculateMultiLayout } from './lib/layout.js'
 import { askSettings, isValidCount } from './lib/setup.js'
-import { spawnWindows } from './lib/spawn.js'
+import { spawnWindows, spawnTabs } from './lib/spawn.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // 도구 폴더 안에서 실행하면 한 단계 위를 기본 폴더로 쓴다
@@ -23,13 +23,19 @@ claude-grid ${PKG.version}  Claude Code 창 여러 개를 한 번에 띄워 화�
   claude-grid --config 이름  설정을 "이름" 프리셋으로 따로 저장
   claude-grid 이름          프리셋으로 실행
   claude-grid --list        프리셋 목록
+  claude-grid --tabs        이번만 창 하나에 탭 여러 개로 (Windows Terminal)
+  claude-grid --windows     이번만 창 여러 개로
 
 설정 파일: ${CONFIG_PATH}
 `
 
 async function main() {
-  const [flag, arg] = process.argv.slice(2)
+  // --tabs / --windows 는 이번 실행에만 적용하는 배치 방식
+  const argv = process.argv.slice(2)
+  const once = argv.includes('--tabs') ? 'tabs' : argv.includes('--windows') ? 'windows' : null
+  const [flag, arg] = argv.filter((a) => a !== '--tabs' && a !== '--windows')
   const platform = detectOS()
+  const withOnce = (s) => (once ? { ...s, layout: once } : s)
 
   if (flag === '--help' || flag === '-h') return console.log(HELP)
   if (flag === '--version' || flag === '-v') return console.log(PKG.version)
@@ -47,7 +53,7 @@ async function main() {
       saveConfig({ ...loadConfig(), ...settings })
       console.log(`설정을 저장했습니다. 다음부터는 claude-grid 만 치면 바로 뜹니다. (${CONFIG_PATH})`)
     }
-    return launch(platform, settings)
+    return launch(platform, withOnce(settings))
   }
 
   let config = loadConfig()
@@ -60,7 +66,7 @@ async function main() {
   }
 
   if (flag && isValidCount(flag)) {
-    return launch(platform, { ...config, count: parseInt(flag, 10), paths: [] })
+    return launch(platform, withOnce({ ...config, count: parseInt(flag, 10), paths: [] }))
   }
 
   if (flag && !flag.startsWith('-')) {
@@ -70,11 +76,11 @@ async function main() {
       throw new Error(`프리셋 "${flag}"이 없습니다. claude-grid --list 로 확인하세요.`)
     }
     // 예전 프리셋은 { count, paths }만 있으므로 기본 설정 위에 덮는다
-    return launch(platform, { ...config, ...preset, count: preset.count ?? preset.paths?.length ?? config.count })
+    return launch(platform, withOnce({ ...config, ...preset, count: preset.count ?? preset.paths?.length ?? config.count }))
   }
 
   if (flag) throw new Error(`알 수 없는 옵션: ${flag}\n${HELP}`)
-  return launch(platform, config)
+  return launch(platform, withOnce(config))
 }
 
 async function setup(platform, current) {
@@ -105,23 +111,35 @@ async function launch(platform, settings) {
   if (missing.length) throw new Error(`폴더가 없습니다: ${missing.join(', ')}\nclaude-grid --config 로 폴더를 다시 고르세요.`)
 
   const monitors = resolveMonitors(platform, settings.monitor)
-  const cells = monitors.length > 1 ? calculateMultiLayout(monitors, count) : calculateLayout(monitors[0], count)
-
   const found = findClaude(platform)
   if (!found) console.log('주의: claude 명령을 찾지 못했습니다. 창은 열리지만 claude가 실행되지 않을 수 있습니다.')
+  const claudeCmd = found ?? 'claude'
 
-  console.log(`\n${terminalDisplayName(settings.terminal)} 창 ${count}개를 띄우는 중...`)
-  const { opened, placed } = await spawnWindows({
-    terminal: settings.terminal,
-    platform,
-    claudeCmd: found ?? 'claude',
-    windows: paths.map((p, i) => ({ path: p, cell: cells[i] })),
-  })
+  const canTab = settings.terminal === 'windowsterminal' && (platform === 'windows' || platform === 'wsl')
+  if (settings.layout === 'tabs' && !canTab) {
+    console.log('탭으로 띄우기는 Windows Terminal에서만 됩니다. 이번엔 창 여러 개로 띄웁니다.')
+  }
 
-  if (placed < opened) {
-    console.log(`창 ${opened}개 중 ${placed}개만 자리를 맞췄습니다. 나머지는 직접 옮겨 주세요.`)
+  if (settings.layout === 'tabs' && canTab) {
+    // 창 하나에 탭 여러 개. 모니터를 여러 대 골랐으면 주 모니터에 띄운다
+    const monitor = monitors.find((m) => m.primary) ?? monitors[0]
+    console.log(`\nWindows Terminal 창 하나에 탭 ${count}개를 여는 중...`)
+    const { placed } = spawnTabs({ platform, claudeCmd, monitor, paths })
+    console.log(placed ? `탭 ${count}개를 열었습니다. Ctrl+Tab으로 탭을 넘길 수 있습니다.` : '창은 열었지만 자리를 맞추지 못했습니다.')
   } else {
-    console.log(`창 ${opened}개를 띄웠습니다.`)
+    const cells = monitors.length > 1 ? calculateMultiLayout(monitors, count) : calculateLayout(monitors[0], count)
+    console.log(`\n${terminalDisplayName(settings.terminal)} 창 ${count}개를 띄우는 중...`)
+    const { opened, placed } = await spawnWindows({
+      terminal: settings.terminal,
+      platform,
+      claudeCmd,
+      windows: paths.map((p, i) => ({ path: p, cell: cells[i] })),
+    })
+    if (placed < opened) {
+      console.log(`창 ${opened}개 중 ${placed}개만 자리를 맞췄습니다. 나머지는 직접 옮겨 주세요.`)
+    } else {
+      console.log(`창 ${opened}개를 띄웠습니다.`)
+    }
   }
   console.log('설정 바꾸기: claude-grid --config   도움말: claude-grid --help\n')
 }
@@ -138,6 +156,7 @@ function printSettings(config) {
     : config.folder || '실행한 위치'
   console.log(`
 터미널   ${terminalDisplayName(config.terminal)}
+띄우기   ${config.layout === 'tabs' ? '창 하나에 탭 여러 개' : '창 여러 개로 나눠 배치'}
 모니터   ${monitor}
 창 개수  ${config.count}
 폴더     ${folder}

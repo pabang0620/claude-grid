@@ -10,10 +10,11 @@
 npx claude-grid
 ```
 
-The first run asks four questions (terminal, monitor, how many windows, which folder) and saves the answers. Every run after that opens the windows right away. claude-grid launches each terminal, finds the new window, and moves it into its grid cell, so 4, 8 or 20 windows line up edge to edge.
+The first run asks a few questions (terminal, tiled windows or tabs, monitor, how many, which folder) and saves the answers. Every run after that opens the windows right away. claude-grid launches each terminal, finds the new window, and moves it into its grid cell, so 4, 8 or 20 windows line up edge to edge.
 
 - Windows Terminal on Windows and WSL, macOS Terminal.app / iTerm2, Linux GNOME Terminal / Konsole / xterm
 - 1 to 20 windows, on one monitor or spread across all of them
+- Tabs mode (Windows Terminal): one window with a tab per session, switch like browser tabs
 - `npx claude-grid 8` opens 8 windows this time without changing your saved setup
 
 Video version (MP4, 14s): [promo/claude-grid-promo.mp4](promo/claude-grid-promo.mp4)
@@ -35,9 +36,12 @@ npx claude-grid
 처음 한 번만 아래를 묻고 저장합니다. 설치된 터미널이 하나뿐이거나 모니터가 한 대면 그 질문은 건너뜁니다.
 
 1. 터미널 (Windows Terminal 추천)
-2. 모니터 (한 대 고르기, 또는 "모든 모니터에 나눠서")
-3. 창 개수 (1~20)
-4. 폴더
+2. 띄우는 방식 (Windows Terminal일 때만 묻습니다)
+   - 창 여러 개로 나눠 배치: 한눈에 다 보기
+   - 창 하나에 탭 여러 개: 크롬 탭처럼 위쪽 탭으로 넘겨 보기 (Ctrl+Tab)
+3. 모니터 (한 대 고르기, 또는 "모든 모니터에 나눠서")
+4. 개수 (1~20)
+5. 폴더
    - 실행한 위치: 명령을 친 폴더에서 엽니다
    - 항상 같은 폴더: 지금 고른 폴더에서 항상 엽니다
    - 창마다 다른 폴더: 창별로 고릅니다
@@ -53,7 +57,9 @@ npx claude-grid 10     # 이번만 10개 (설정은 그대로)
 
 | 명령 | 하는 일 |
 |------|---------|
-| `claude-grid --config` | 네 가지를 다시 묻고 저장한 뒤 실행 |
+| `claude-grid --config` | 처음 질문을 다시 묻고 저장한 뒤 실행 |
+| `claude-grid --tabs` | 이번만 창 하나에 탭 여러 개로 |
+| `claude-grid --windows` | 이번만 창 여러 개로 나눠 배치 |
 | `claude-grid --show` | 지금 설정 보기 |
 | `claude-grid --config 이름` | 설정을 "이름" 프리셋으로 따로 저장 |
 | `claude-grid 이름` | 프리셋으로 실행 |
@@ -65,6 +71,7 @@ npx claude-grid 10     # 이번만 10개 (설정은 그대로)
 ```json
 {
   "terminal": "windowsterminal",
+  "layout": "windows",
   "monitor": "all",
   "count": 8,
   "folder": "/home/me/project",
@@ -75,7 +82,8 @@ npx claude-grid 10     # 이번만 10개 (설정은 그대로)
 }
 ```
 
-- `monitor`: `"all"`은 모든 모니터에 나눠서, `null`은 주 모니터
+- `layout`: `"windows"`는 창 여러 개, `"tabs"`는 창 하나에 탭 여러 개
+- `monitor`: `"all"`은 모든 모니터에 나눠서, `null`은 주 모니터 (탭 방식은 고른 모니터 하나에 창을 꽉 채웁니다)
 - `folder`: `""`이면 실행한 위치
 - `paths`: 창마다 폴더를 다르게 쓸 때만 채웁니다. 비어 있는 칸은 `folder`를 씁니다
 
