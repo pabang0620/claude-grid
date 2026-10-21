@@ -39,7 +39,7 @@ async function main() {
     const names = listPresets()
     if (names.length === 0) {
       console.log('저장된 프리셋이 없습니다.')
-      console.log('npx claunch 를 실행해 설정을 저장해보세요.')
+      console.log('npx claude-grid 를 실행해 설정을 저장해보세요.')
     } else {
       console.log('저장된 프리셋:')
       names.forEach((n) => console.log(`  - ${n}`))
@@ -58,7 +58,7 @@ async function main() {
     const preset = getPreset(flag)
     if (!preset) {
       console.error(`프리셋 "${flag}"을 찾을 수 없습니다.`)
-      console.log('npx claunch --list 로 저장된 프리셋을 확인하세요.')
+      console.log('npx claude-grid --list 로 저장된 프리셋을 확인하세요.')
       process.exit(1)
     }
     const config = loadConfig()
@@ -95,7 +95,7 @@ async function main() {
 }
 
 async function runInteractive() {
-  console.log('\nWelcome to claunch\n')
+  console.log('\nWelcome to claude-grid\n')
 
   const platform = detectOS()
   let terminal = detectTerminal(platform)
@@ -334,10 +334,10 @@ function terminalChoices(platform) {
 function printAliasHint(os) {
   console.log('\n더 빠르게 실행하려면 alias를 추가하세요:')
   if (os === 'windows') {
-    console.log('  PowerShell: Set-Alias cl "npx claunch"')
+    console.log('  PowerShell: Set-Alias cl "npx claude-grid"')
     console.log('  $PROFILE 파일에 추가하면 영구 적용됩니다.')
   } else {
-    console.log('  alias cl="npx claunch"')
+    console.log('  alias cl="npx claude-grid"')
     console.log('  ~/.zshrc 또는 ~/.bashrc에 추가하면 cl 한 글자로 실행 가능합니다.')
   }
   console.log('  자세한 방법: README 참고\n')
