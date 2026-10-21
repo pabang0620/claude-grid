@@ -1,0 +1,204 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face { font-family: Mono; src: local('DejaVu Sans Mono'); }
+  :root { --bg: #0b0e14; --win: #151a23; --bar: #1d2430; --line: #2a3342; --text: #d7dce5; --dim: #7d8899; --accent: #d97757; --green: #7fc77f; }
+  html, body { margin: 0; width: 1280px; height: 720px; overflow: hidden; background: var(--bg); }
+  body { font-family: 'Noto Sans CJK KR', 'Noto Sans', sans-serif; color: var(--text); }
+  #stage { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 40%, #141a26 0%, var(--bg) 70%); }
+  #taskbar { position: absolute; left: 0; right: 0; bottom: 0; height: 28px; background: #10141c; border-top: 1px solid #1c2330; }
+  .win { position: absolute; z-index: 5; overflow: hidden; border-radius: 7px; background: var(--win); border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(0,0,0,.45); }
+  .inner { position: absolute; left: 0; top: 0; width: 320px; height: 346px; transform-origin: 0 0; font-family: Mono, monospace; }
+  .bar { height: 22px; background: var(--bar); display: flex; align-items: center; padding: 0 9px; font-size: 10px; color: var(--dim); font-family: 'Noto Sans', sans-serif; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #3a4456; margin-right: 5px; }
+  .body { padding: 10px 11px; font-size: 10.5px; line-height: 1.55; }
+  .logo { border: 1px solid var(--accent); border-radius: 5px; padding: 6px 8px; margin-bottom: 8px; color: var(--accent); }
+  .dim { color: var(--dim); }
+  .ok { color: var(--green); }
+  .cursor { display: inline-block; width: 6px; height: 11px; background: var(--text); vertical-align: -1px; }
+  #launcher { position: absolute; left: 330px; top: 230px; width: 620px; height: 230px; }
+  #launcher .inner { width: 620px; height: 230px; }
+  #launcher .body { font-size: 17px; padding: 18px 20px; }
+  #caption { position: absolute; left: 0; right: 0; top: 26px; text-align: center; font-size: 30px; font-weight: 700; letter-spacing: -.3px; text-shadow: 0 2px 14px rgba(0,0,0,.8); z-index: 50; }
+  #caption .cmd { font-family: Mono, monospace; color: var(--accent); font-weight: 400; }
+  .monitor { position: absolute; z-index: 1; border: 3px solid #2d3646; border-radius: 10px; background: #0e131b; }
+  .stand { position: absolute; width: 90px; height: 26px; background: #232b38; border-radius: 0 0 6px 6px; }
+  #end { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 60; background: var(--bg); }
+  #end h1 { margin: 0; font-size: 76px; letter-spacing: -2px; font-family: Mono, monospace; font-weight: 400; }
+  #end h1 b { color: var(--accent); font-weight: 400; }
+  #end .install { margin-top: 26px; font-family: Mono, monospace; font-size: 30px; background: #151a23; border: 1px solid var(--line); border-radius: 10px; padding: 12px 26px; }
+  #end .install span { color: var(--dim); }
+  #end p { margin: 22px 0 0; font-size: 22px; color: var(--text); }
+  #end .url { margin-top: 18px; font-size: 18px; color: var(--dim); font-family: Mono, monospace; }
+</style>
+</head>
+<body>
+<div id="stage"><div id="taskbar"></div></div>
+<div id="caption"></div>
+<div id="end">
+  <h1>claude<b>-</b>grid</h1>
+  <div class="install"><span>$</span> npx claude-grid</div>
+  <p>Ask once. Launch 1 to 20 Claude Code sessions, tiled edge to edge.</p>
+  <div class="url">github.com/pabang0620/claude-grid</div>
+</div>
+<script>
+const W = 1280, H = 720, WORK_H = 692, GAP = 6
+const TASKS = [
+  ['~/shop/api', 'fix the login redirect bug', 'Found it in auth/session.js'],
+  ['~/shop/web', 'add dark mode to settings', 'Updated 3 components'],
+  ['~/shop/api', 'write tests for checkout', '12 tests passing'],
+  ['~/docs', 'update the README install steps', 'README.md updated'],
+  ['~/shop/web', 'make the cart page faster', 'Removed 2 re-renders'],
+  ['~/infra', 'why is the deploy failing?', 'Missing env var: DB_URL'],
+  ['~/shop/api', 'add rate limiting to /login', 'Middleware added'],
+  ['~/mobile', 'translate the onboarding text', '4 screens translated'],
+  ['~/shop/api', 'review my last commit', 'Looks good, 1 suggestion'],
+  ['~/data', 'clean up the CSV import', 'Handles empty rows now'],
+  ['~/shop/web', 'fix the footer on mobile', 'Fixed at 375px'],
+  ['~/scripts', 'rename the backup script', 'Done'],
+]
+
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v))
+const prog = (t, a, b) => clamp((t - a) / (b - a))
+const easeOut = (p) => 1 - Math.pow(1 - p, 3)
+const easeInOut = (p) => (p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2)
+const easeBack = (p) => { const c = 1.6; return 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2) }
+const lerp = (a, b, p) => a + (b - a) * p
+const lerpRect = (a, b, p) => ({ x: lerp(a.x, b.x, p), y: lerp(a.y, b.y, p), w: lerp(a.w, b.w, p), h: lerp(a.h, b.h, p) })
+
+function grid(area, cols, rows, n) {
+  const out = []
+  for (let i = 0; i < n; i++) {
+    const c = i % cols, r = Math.floor(i / cols)
+    const cw = (area.w - GAP * (cols + 1)) / cols, ch = (area.h - GAP * (rows + 1)) / rows
+    out.push({ x: area.x + GAP + c * (cw + GAP), y: area.y + GAP + r * (ch + GAP), w: cw, h: ch })
+  }
+  return out
+}
+
+// 위쪽 84px은 자막 자리
+const FULL = { x: 0, y: 84, w: W, h: WORK_H - 84 }
+const G8 = grid(FULL, 4, 2, 8)
+const G12 = grid(FULL, 4, 3, 12)
+const MON_A = { x: 52, y: 178, w: 568, h: 320 }, MON_B = { x: 660, y: 178, w: 568, h: 320 }
+const DUAL = [...grid(MON_A, 3, 2, 6), ...grid(MON_B, 3, 2, 6)]
+const CENTER = { x: W / 2 - 60, y: H / 2 - 60, w: 120, h: 120 }
+
+// 창 i가 나타나는 시각
+const spawnAt = (i) => (i < 8 ? 2.3 + i * 0.22 : 7.0 + (i - 8) * 0.18)
+
+function rectAt(i, t) {
+  const s = spawnAt(i)
+  let r = lerpRect(CENTER, i < 8 ? G8[i] : G12[i], easeBack(prog(t, s, s + 0.5)))
+  if (i < 8) r = lerpRect(r, G12[i], easeInOut(prog(t, 6.75, 7.35)))
+  r = lerpRect(r, DUAL[i], easeInOut(prog(t, 9.0, 9.8)))
+  return r
+}
+
+const stage = document.getElementById('stage')
+const caption = document.getElementById('caption')
+const end = document.getElementById('end')
+
+function makeWin(cls) {
+  const el = document.createElement('div')
+  el.className = 'win ' + cls
+  el.innerHTML = '<div class="inner"><div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="title"></span></div><div class="body"></div></div>'
+  stage.appendChild(el)
+  return el
+}
+
+const launcher = makeWin('')
+launcher.id = 'launcher'
+launcher.querySelector('.title').textContent = 'Terminal'
+
+const wins = TASKS.map((task, i) => {
+  const el = makeWin('')
+  el.querySelector('.title').textContent = `Claude ${i + 1}`
+  return el
+})
+
+const monitors = [MON_A, MON_B].map((m) => {
+  const el = document.createElement('div')
+  el.className = 'monitor'
+  Object.assign(el.style, { left: m.x - 8 + 'px', top: m.y - 8 + 'px', width: m.w + 10 + 'px', height: m.h + 10 + 'px' })
+  const st = document.createElement('div')
+  st.className = 'stand'
+  Object.assign(st.style, { left: m.x + m.w / 2 - 45 + 'px', top: m.y + m.h + 6 + 'px' })
+  stage.appendChild(el); stage.appendChild(st)
+  return [el, st]
+})
+
+function typed(text, t, a, b) {
+  return text.slice(0, Math.round(text.length * prog(t, a, b)))
+}
+
+function winBody(i, t) {
+  const [dir, ask, done] = TASKS[i]
+  const s = spawnAt(i)
+  const askStart = Math.max(s + 0.7, 4.9 + (i % 4) * 0.12)
+  const doneAt = askStart + 1.1 + (i % 3) * 0.25
+  const cursorOn = Math.floor(t * 2.5) % 2 === 0
+  let html = `<div class="logo">* Claude Code</div><div class="dim">cwd: ${dir}</div><br>`
+  const q = typed(ask, t, askStart, askStart + 0.7)
+  html += `&gt; ${q}${t < doneAt ? (cursorOn || q.length < ask.length ? '<span class="cursor"></span>' : '') : ''}`
+  if (t >= doneAt) html += `<br><br><span class="ok">&#8226;</span> ${done}`
+  return html
+}
+
+function render(t) {
+  // 1) 실행 터미널
+  const lIn = easeOut(prog(t, 0.1, 0.5)), lOut = prog(t, 2.0, 2.35)
+  launcher.style.opacity = lIn * (1 - lOut)
+  launcher.style.transform = `scale(${0.96 + 0.04 * lIn - 0.08 * lOut})`
+  const cmd = typed('npx claude-grid', t, 0.6, 1.4)
+  let lb = `<span class="dim">$</span> ${cmd}${t < 1.6 && Math.floor(t * 2.5) % 2 === 0 ? '<span class="cursor" style="width:10px;height:18px"></span>' : ''}`
+  if (t >= 1.6) lb += '<br><span class="dim">Windows Terminal 창 8개를 띄우는 중...</span>'
+  launcher.querySelector('.body').innerHTML = lb
+  launcher.querySelector('.inner').style.transform = 'none'
+
+  // 2) Claude 창들
+  const fadeAll = 1 - prog(t, 11.0, 11.4)
+  wins.forEach((el, i) => {
+    const s = spawnAt(i)
+    const vis = prog(t, s, s + 0.25)
+    if (vis <= 0) { el.style.display = 'none'; return }
+    el.style.display = 'block'
+    const r = rectAt(i, t)
+    Object.assign(el.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px', opacity: vis * fadeAll })
+    el.querySelector('.inner').style.transform = `scale(${r.w / 320})`
+    el.querySelector('.body').innerHTML = winBody(i, t)
+  })
+
+  // 3) 모니터 두 대
+  const mon = easeOut(prog(t, 8.9, 9.6)) * fadeAll
+  monitors.forEach(([a, b]) => { a.style.opacity = mon; b.style.opacity = mon })
+  document.getElementById('taskbar').style.opacity = 1 - mon
+
+  // 4) 자막
+  const caps = [
+    [2.6, 6.4, 'One command. <span class="cmd">8</span> Claude Code sessions, tiled.'],
+    [6.6, 8.7, 'Need more? <span class="cmd">claude-grid 12</span>'],
+    [9.1, 11.0, 'Spread across every monitor.'],
+  ]
+  const cap = caps.find(([a, b]) => t >= a && t < b)
+  if (cap) {
+    const [a, b, text] = cap
+    caption.innerHTML = text
+    caption.style.opacity = Math.min(prog(t, a, a + 0.3), 1 - prog(t, b - 0.3, b))
+  } else {
+    caption.style.opacity = 0
+  }
+
+  // 5) 엔드 카드
+  const e = easeOut(prog(t, 11.2, 11.8))
+  end.style.opacity = e
+  end.style.transform = `scale(${0.97 + 0.03 * e})`
+}
+
+window.render = render
+render(0)
+</script>
+</body>
+</html>

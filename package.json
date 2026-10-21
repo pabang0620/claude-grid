@@ -1,15 +1,38 @@
 {
   "name": "claude-grid",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Open many Claude Code sessions at once, tiled across your monitors. Asks once, then launches with one command.",
-  "bin": { "claude-grid": "./index.js" },
+  "bin": {
+    "claude-grid": "index.js"
+  },
   "type": "module",
-  "keywords": ["claude", "claude-code", "terminal", "workspace", "layout", "developer-tools", "ai"],
+  "keywords": [
+    "claude",
+    "claude-code",
+    "terminal",
+    "workspace",
+    "layout",
+    "developer-tools",
+    "ai",
+    "windows-terminal",
+    "wsl",
+    "multi-monitor",
+    "tiling",
+    "anthropic"
+  ],
   "license": "MIT",
-  "repository": { "type": "git", "url": "git+https://github.com/pabang0620/claude-grid.git" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pabang0620/claude-grid.git"
+  },
   "homepage": "https://github.com/pabang0620/claude-grid#readme",
-  "engines": { "node": ">=18" },
-  "files": ["index.js", "lib/"],
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "index.js",
+    "lib/"
+  ],
   "dependencies": {
     "@inquirer/prompts": "^8.0.0",
     "@inquirer/search": "^4.0.0"
